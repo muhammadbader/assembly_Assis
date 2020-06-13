@@ -7,51 +7,64 @@ extern y_target
 global printer
 
 section .rodata
-    align 16
+    ; align 16
     targetFormat: db "%.2f, %.2f",10,0
     Droneformat: db "%d, %.2f, %.2f, %.2f, %d",10,0
-
+    numFormat: db "%d",10,0
+section .data
+    tmp: dd 0
 section .text
     ;;same case as the target
 printer:
-    push x_target
-    push y_target
+    push dword[x_target+4] ;; push a qword
+    push dword[x_target]
+    push dword[y_target+4] ;; push a qword
+    push dword[y_target]
     push targetFormat
     call printf
-    add esp,12
+    add esp,20
 
     mov ebx,firstDrone
+
+    ; mov eax,0
+    ; mov al,byte[ebx]
+    ; push eax ;; ID
+    ; push numFormat
+    ; call printf
+    ; add esp,8
+
     finit
 printDrones:
     push ebx
-    mov eax,dword[ebx]
-    cmp eax,0 ;; finish
+    cmp ebx,0 ;; finish
     je stopPrinting
     pop ebx
     mov eax,0
-    mov al,byte[ebx]
-    push eax ;; ID
-    fild word[ebx+4];; the x drone
+    mov al,byte[ebx+7] ;;targets hit
+    push eax 
+
+    fild word[ebx+5];;th alpha drone
     sub esp,8
     fstp qword[esp]
 
-    fild word[ebx+12];;th y drone
+    fild word[ebx+3];;th y drone
     sub esp,8
     fstp qword[esp]
 
-    fild word[ebx+20];;th alpha drone
+    fild word[ebx+1];; the x drone
     sub esp,8
     fstp qword[esp]
 
     mov eax,0
-    mov al,byte[ebx+28] ;;targets hit
-    push eax 
-
+    mov al,byte[ebx]
+    push eax ;; ID
+    
+    mov dword[tmp],ebx
     push Droneformat
     call printf
     add esp, (4*9)
-
-    mov ebx,dword[ebx+32]
+    mov ebx,dword[tmp]
+    mov ebx,[ebx+8]
     jmp printDrones
 
 

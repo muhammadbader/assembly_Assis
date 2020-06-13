@@ -74,11 +74,11 @@ here:
 theWinner:  ;; byte 48 indicated dead or alive ;; byte 32 gives the next
     mov ebx,firstDrone
     .winLoop:
-        cmp byte[ebx+48],0 ;; 0 indicated is the drone is dead
+        cmp byte[ebx+12],0 ;; 0 indicated is the drone is dead
         jne weHaveAWinner
-        cmp dword[ebx+32],0
+        cmp dword[ebx+8],0
         je errorNoWinner
-        mov ebx,[ebx+32]
+        mov ebx,[ebx+8]
     jmp .winLoop
 weHaveAWinner:
     mov eax,0
@@ -105,28 +105,28 @@ eliminateOne:
     mov [lastDrone],ebx
         ;; hits = byte 28 in struct
 searchFristAlive:
-    cmp byte[ebx+48],1
+    cmp byte[ebx+12],1
     je .foundOne
-    mov ebx,[ebx+32];; if this drone is dead move to the next one
+    mov ebx,[ebx+8];; if this drone is dead move to the next one
     jmp searchFristAlive
     .foundOne:
         mov eax,0
-        mov al,byte[ebx+28]
+        mov al,byte[ebx+7]
         mov dword[minKills],eax ;; the starting point 
         mov [lastDrone],ebx ;; lastDrone holds the drone to be destroyed
-        mov ebx,[ebx+32]
+        mov ebx,[ebx+8]
     .searchMin:
         cmp byte[ebx+48],1 
         je .cmpMin  ;; if this drone is not dead
     .contSeach:
-        cmp dword[ebx+32],0
+        cmp dword[ebx+8],0
         je .finishSearchMin ;; we got to the end of the drones list
-        mov ebx,[ebx+32] ;; move next
+        mov ebx,[ebx+8] ;; move next
         jmp .searchMin
 
     .cmpMin: 
         mov eax,0
-        mov al,byte[ebx+28]
+        mov al,byte[ebx+7]
         cmp eax,dword[minKills]
         ja .contSeach
         mov dword[minKills],eax
@@ -135,7 +135,7 @@ searchFristAlive:
 
     .finishSearchMin: 
         mov ebx,lastDrone
-        mov byte[ebx+48],0
+        mov byte[ebx+12],0
         
     popad
     pop ebp

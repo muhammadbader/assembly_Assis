@@ -140,10 +140,10 @@ section .text
 
 %macro addDrone 0
     mov ebx, firstDrone
-    cmp byte[ebx + 32],-1 ;;the first drone
+    cmp byte[ebx + 8],-1 ;;the first drone
     je %%_firstDrone
     mov ebx, lastDrone
-    mov [ebx + 32],eax
+    mov [ebx + 8],eax
     mov [lastDrone], eax
     jmp %%end
     %%_firstDrone:
@@ -155,7 +155,7 @@ section .text
 %macro freeDrones 0
     mov ebx,firstDrone
     %%loopFree:
-        mov eax,[ebx+32]
+        mov eax,[ebx+8]
         mov dword[lastDrone],eax
         push ebx
         call free
@@ -254,10 +254,10 @@ createTheDrones:
         add esp,4
         mov cl,byte[droneID]
         mov byte[eax],cl ;; the first byte in the struct is the id
-        mov byte[eax + 28],0 ;;the hit targets
-        mov dword[eax + 32],0 ;; this drone is the last drone in the current list
-        mov dword[eax + 48],1 ;; the drone is not dead yet
-        mov dword[eax + 52],0 ;; initial speed
+        mov byte[eax + 7],0 ;;the hit targets
+        mov dword[eax + 8],0 ;; this drone is the last drone in the current list
+        mov dword[eax + 12],1 ;; the drone is not dead yet
+        mov dword[eax + 13],0 ;; initial speed
         cmp dword[tmpN],0
         je initRoutine
 
@@ -281,7 +281,7 @@ createTheDrones:
         basicx87
         fstp qword[tmp87] ;; fstp return qword
         mov bx,word[tmp87]
-        mov word[eax + 12],bx
+        mov word[eax + 3],bx
 
         ;;calc the initial alpha of the drone
         push eax
@@ -294,7 +294,7 @@ createTheDrones:
         mov dword[mulNumber],100
         fstp qword[tmp87] ;; fstp return qword
         mov bx,word[tmp87]
-        mov word[eax + 20],bx
+        mov word[eax + 5],bx
 
         addDrone
         dec dword[tmpN]
