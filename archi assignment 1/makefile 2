@@ -1,0 +1,15 @@
+all: exec
+
+libs: asm-lib
+
+asm-lib: asm_task2Assignment1.s
+	nasm -g -f elf32 -o asm_task2Assignment1.o asm_task2Assignment1.s
+	
+exec: task1.c libs
+	gcc -g -c -m32 -o main_task2Assignment1.o main_task2Assignment1.c
+	gcc -g -m32 main_task2Assignment1.o asm_task2Assignment1.o -o main_task2Assignment1
+	rm main_task2Assignment1.o asm_task2Assignment1.o
+
+.PHONY: clean
+clean:
+	rm -rf ./*.o main_task2Assignment1
