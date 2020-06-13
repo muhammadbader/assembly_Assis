@@ -31,15 +31,15 @@ printDrones:
     mov eax,0
     mov al,byte[ebx]
     push eax ;; ID
-    fld word[ebx+4];; the x drone
+    fild word[ebx+4];; the x drone
     sub esp,8
     fstp qword[esp]
 
-    fld word[ebx+12];;th y drone
+    fild word[ebx+12];;th y drone
     sub esp,8
     fstp qword[esp]
 
-    fld word[ebx+20];;th alpha drone
+    fild word[ebx+20];;th alpha drone
     sub esp,8
     fstp qword[esp]
 

@@ -1,4 +1,4 @@
-align 16
+
 global startCo
 global Randomxy
 global resume
@@ -13,11 +13,13 @@ global y_target
 global lfsr
 global initState
 global curr_cor
+global endCo
 
 extern scheduler ;; the main function for the scheduler
 extern drones ;; the main function for the drones
 extern printer ;; the main function in the printer
 extern createTarget
+
 
 section .data
     droneID: db 0
@@ -39,25 +41,27 @@ section .data
     counter: dd 0
     x_target: dq 0
     y_target: dq 0
+    tmp87: dq 0
     
 section	.rodata
     align 16 
+    
+    errorIn: db "Invalid intput parameters, should be 6 but recieved:-> %d",10,0
+    sscanfRead: db "%d" ,0
+
+section .bss
     N: resd 1
     tmpN: resd 1
     R: resd 1
     k: resd 1
     d: resd 1
     seed: resd 1
-    errorIn: db "Invalid intput parameters, should be 6 but recieved:-> %d",10,0
-    sscanfRead: db "%d" ,0
-
-section .bss
     mainSP: resd 1
     curr_cor: resd 1
     stcksz: equ 16*1024
-    maxCors: 100*100 ;; not sure about the number, but we need this to instantiate the cors array
-    cors: resd maxCors ;; an array of co-routines top
-    stacks: resb maxCors * stcksz
+    
+    cors: resd 10000 ;; an array of co-routines top
+    stacks: resb 10000 * stcksz
     stateNumber: resb 16
     mulNumber: resb 4
     firstDrone: resb 17
@@ -140,11 +144,11 @@ section .text
     je %%_firstDrone
     mov ebx, lastDrone
     mov [ebx + 32],eax
-    mov lastDrone, eax
+    mov [lastDrone], eax
     jmp %%end
     %%_firstDrone:
-        mov firstDrone, eax
-        mov lastDrone, eax
+        mov [firstDrone], eax
+        mov [lastDrone], eax
     %%end:
 %endmacro
 
@@ -213,10 +217,10 @@ main:
     finit       ;;initialize the x87 thing
     mov dword[stateNumber],65535
     mov dword[mulNumber],100
-    mov tword[firstDrone],0
+    mov dword[firstDrone],0
     mov ebx,firstDrone
     mov byte[ebx+32], -1
-    mov tword[lastDrone],0
+    mov dword[lastDrone],0
     call createNewTarget
     call createTheDrones
 
@@ -227,7 +231,7 @@ createNewTarget:
 
     ;;the x coordinate of the target
     basicx87
-    fstp dword[x_target]
+    fstp qword[x_target]
 
     ;; now we will do the same thing for the y coordinate
     call Randomxy
@@ -235,7 +239,7 @@ createNewTarget:
     mov [initState],ax
 
     basicx87
-    fstp dword[y_target]
+    fstp qword[y_target]
     ret
 
 createTheDrones:
@@ -264,7 +268,9 @@ createTheDrones:
         mov [initState],ax
         pop eax
         basicx87
-        fstp word[eax + 4]
+        fstp qword[tmp87] ;; fstp return qword
+        mov bx,word[tmp87]
+        mov word[eax + 4],bx
 
         ;;calc the initial y coordinate of the drone
         push eax
@@ -273,7 +279,9 @@ createTheDrones:
         mov [initState],ax
         pop eax
         basicx87
-        fstp word[eax + 12]
+        fstp qword[tmp87] ;; fstp return qword
+        mov bx,word[tmp87]
+        mov word[eax + 12],bx
 
         ;;calc the initial alpha of the drone
         push eax
@@ -284,7 +292,9 @@ createTheDrones:
         mov dword[mulNumber],360 ;;for the alpha --> radian
         basicx87
         mov dword[mulNumber],100
-        fstp word[eax + 20]
+        fstp qword[tmp87] ;; fstp return qword
+        mov bx,word[tmp87]
+        mov word[eax + 20],bx
 
         addDrone
         dec dword[tmpN]
@@ -296,7 +306,7 @@ Randomxy:
     pushf
     mov ebp,esp
 
-    mov [counter],16
+    mov dword[counter],16
     mov eax,0
     mov ax,word[initState]
     mov [lfsr],ax
@@ -305,8 +315,8 @@ Randomxy:
         lfsrloop
 
         mov [lfsr],ax
-        dec [counter]
-        cmp [counter],0
+        dec dword[counter]
+        cmp dword[counter],0
         jne .lfsrloop
 
     popf
@@ -347,7 +357,7 @@ initRoutine:
     
     .cores:
         cmp dword[tmpN],0
-        je finishDrones ;; here we need to exit totally
+        je .finishDrones ;; here we need to exit totally
     .initDrones:
         mov edx, drones
         mov ebx,3 ;; because the first thre co-routines are the schedulet, printer nad target

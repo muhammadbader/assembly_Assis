@@ -1,14 +1,18 @@
 all: exec
 
-exec: ass3.o
-	gcc -m32 -Wall -g ass3 ass3.o target.o drone.o printer.o scheduler.o
+exec: ass3.o drone.o printer.o scheduler.o target.o
+	gcc -m32 -Wall -g -o ass3 ass3.o drone.o printer.o scheduler.o target.o 
 
-Ass3.o: ass3.s
+ass3.o: ass3.s
 	nasm -f elf ass3.s -o ass3.o
-	nasm -f elf target .s -o target.o
+drone.o: drone.s
 	nasm -f elf -o drone.o drone.s
+printer.o: printer.s
 	nasm -f elf -o printer.o printer.s
+scheduler.o: scheduler.s
 	nasm -f elf -o scheduler.o scheduler.s
+target.o: target.s
+	nasm -f elf target.s -o target.o
 
 .PHONY: clean
 clean:
