@@ -3,6 +3,8 @@ extern resume
 extern firstDrone
 extern x_target
 extern y_target
+extern activeDrones
+extern N
 
 global printer
 
@@ -10,12 +12,22 @@ section .rodata
     ; align 16
     targetFormat: db "%.2f, %.2f",10,0
     Droneformat: db "%d, %.2f, %.2f, %.2f, %d",10,0
-    numFormat: db "%d",10,0
+    numFormat: db "we got to: %d and c = %d",10,0
 section .data
     tmp: dd 0
+    c: dd 0
 section .text
     ;;same case as the target
 printer:
+    push dword[c]
+    push dword[activeDrones]
+    push numFormat
+    call printf
+    add esp,8
+    inc dword[c]
+    cmp dword[activeDrones],0
+    je eend
+
     push dword[x_target+4] ;; push a qword
     push dword[x_target]
     push dword[y_target+4] ;; push a qword
@@ -24,7 +36,12 @@ printer:
     call printf
     add esp,20
 
-    mov ebx,firstDrone
+    ; mov ebx,0
+    ; mov eax,1
+    ; int 0x80
+
+
+    mov ebx,[firstDrone]
 
     ; mov eax,0
     ; mov al,byte[ebx]
@@ -62,7 +79,9 @@ printDrones:
     mov dword[tmp],ebx
     push Droneformat
     call printf
+
     add esp, (4*9)
+
     mov ebx,dword[tmp]
     mov ebx,[ebx+8]
     jmp printDrones
@@ -74,3 +93,7 @@ stopPrinting:
     jmp printer
 
 ;; not tested yet
+eend:
+    mov ebx,0
+    mov eax,1
+    int 0x80

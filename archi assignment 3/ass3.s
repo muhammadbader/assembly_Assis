@@ -5,6 +5,7 @@ global resume
 global k;; for the scheduler
 global N;; for the scheduler
 global R
+global d
 global createNewTarget
 global firstDrone
 global lastDrone
@@ -23,7 +24,7 @@ extern createTarget
 
 section .data
     droneID: db 0
-
+    index: dd 0
     ;; here the drone struct is represented as a linked list
     struc drone
         id: resb 1 
@@ -35,19 +36,22 @@ section .data
         dead: resb 1 ;; 52 bits
         speed: resd 1
     endstruc
-    
+    here: db "here",10,0
     lfsr: dd 0
     initState: dw 0
     counter: dd 0
     x_target: dq 0
     y_target: dq 0
     tmp87: dq 0
+    targetFormat: db "%.2f, %.2f",10,0
     
 section	.rodata
     align 16 
     
     errorIn: db "Invalid intput parameters, should be 6 but recieved:-> %d",10,0
     sscanfRead: db "%d" ,0
+    msg: db "%s",10,0
+    nums: db "%d",10,0
 
 section .bss
     N: resd 1
@@ -64,8 +68,8 @@ section .bss
     stacks: resb 10000 * stcksz
     stateNumber: resb 16
     mulNumber: resb 4
-    firstDrone: resb 17
-    lastDrone: resb 17 
+    firstDrone: resb 4
+    lastDrone: resb 4 
 
 section .text
     align 16
@@ -84,11 +88,13 @@ section .text
 %endmacro
 
 %macro instanciateCor 0
+    push edx ;; here the edx is the retun address like scheduler and printer ...
     ;;ebx is the core ID
     mov edx,0
     mov eax, stcksz
     mul ebx
     pop edx ;; restore the retun address afher the mul
+
     add eax, stacks + stcksz ;; here after we got the eaxt to points to the statr of the wanted stack, we move it to the end of it so that he would be ready for use as a regualr stack
     mov [cors + 4*ebx],eax;; save the top of the stack in it's array
     mov dword[mainSP],esp
@@ -139,10 +145,10 @@ section .text
 %endmacro
 
 %macro addDrone 0
-    mov ebx, firstDrone
-    cmp byte[ebx + 8],-1 ;;the first drone
+    ; mov ebx, [firstDrone]
+    cmp dword[firstDrone],-1 ;;the first drone
     je %%_firstDrone
-    mov ebx, lastDrone
+    mov ebx, [lastDrone]
     mov [ebx + 8],eax
     mov [lastDrone], eax
     jmp %%end
@@ -153,7 +159,7 @@ section .text
 %endmacro
 
 %macro freeDrones 0
-    mov ebx,firstDrone
+    mov ebx,[firstDrone]
     %%loopFree:
         mov eax,[ebx+8]
         mov dword[lastDrone],eax
@@ -178,56 +184,151 @@ main:
     cmp eax,6
     jne errorInput
     mov esi,[esp+8] ;; argv**
-    mov ecx, 1 ;; the argv[1] is ./ass3
+    mov dword[index], 1 ;; the argv[1] is ./ass3
+
+    ; pushad
+    ; push ecx
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
+    mov ecx,dword[index]
     mov eax, [esi+ 4*ecx]
     push N
     sscanfCall
 
-    inc ecx
+    
+    ; pushad
+    ; push dword[index]
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
+
+    inc dword[index]
+    mov ecx,dword[index]
     mov eax, [esi+ 4*ecx]
     push R
     sscanfCall
 
-    inc ecx
+    
+
+    ; pushad
+    ; push dword[index]
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
+
+    inc dword[index]
+    mov ecx,dword[index]
     mov eax, [esi+ 4*ecx]
     push k
     sscanfCall
 
-    inc ecx
-    mov eax, [esi+ 4*ecx]
-    mov dword[d],eax
+    ; pushad 
+    ; push dword[k]
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
 
-    inc ecx
+    ; pushad
+    ; push dword[esi+ 4*ecx]
+    ; push msg
+    ; call printf
+    ; add esp,8
+    ; popad
+
+
+    inc dword[index]
+    mov ecx,dword[index]
+    mov eax, [esi+ 4*ecx]
+    push d
+    sscanfCall
+
+    ; pushad 
+    ; push dword[d]
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
+    
+    inc dword[index]
+    mov ecx,dword[index]
     mov eax, [esi+ 4*ecx]
     push seed
     sscanfCall
     mov ax,word[seed]
     mov word[initState],ax
 
+
+    ; pushad 
+    ; push dword[seed]
+    ; push nums
+    ; call printf
+    ; add esp,8
+    ; popad
+
+    ; pushad
+    ; mov ecx,dword[index]
+    ; push dword[esi+ 4*ecx]
+    ; push msg
+    ; call printf
+    ; add esp,8
+    ; popad
+
     mov ebx,0 ;; we consider the scheduler as co-routine 0 so we need to instantiate it by calling the initCo from the prac session
+    push ebx
     mov edx, scheduler
     call initCo ;;which is a func
+    pop ebx
+
     inc ebx ;; this co_routine is for the printer
     mov edx,printer
+    push ebx
     call initCo
+    pop ebx
+
     inc ebx ;; and finally we will amke the target as co_routine 3
+    push ebx
     mov edx, createTarget
     call initCo
-
+    pop ebx
+    
     finit       ;;initialize the x87 thing
     mov dword[stateNumber],65535
     mov dword[mulNumber],100
-    mov dword[firstDrone],0
-    mov ebx,firstDrone
-    mov byte[ebx+32], -1
+    mov dword[firstDrone],-1
+    ; mov ebx,[firstDrone]
+    ; mov byte[ebx], -1
     mov dword[lastDrone],0
     call createNewTarget
+
+    ; push dword[x_target+4] ;; push a qword
+    ; push dword[x_target]
+    ; push dword[y_target+4] ;; push a qword
+    ; push dword[y_target]
+    ; push targetFormat
+    ; call printf
+    ; add esp,20
+
     call createTheDrones
 
 createNewTarget:
     call Randomxy
     mov ax,[lfsr] ;; save the new random number
     mov [initState],ax
+
+    ; push dword[mulNumber]
+    ; push nums
+    ; call printf
+    ; add esp,8
+
+    ; push dword[stateNumber]
+    ; push nums
+    ; call printf
+    ; add esp,8
 
     ;;the x coordinate of the target
     basicx87
@@ -249,7 +350,14 @@ createTheDrones:
     mov eax,dword[N]
     mov dword[tmpN],eax
     .droneloop:
-        push 68
+        ; push here
+        ; call printf
+        ; add esp,4
+
+        cmp dword[tmpN],0
+        je initRoutine
+
+        push 17
         call malloc
         add esp,4
         mov cl,byte[droneID]
@@ -258,18 +366,19 @@ createTheDrones:
         mov dword[eax + 8],0 ;; this drone is the last drone in the current list
         mov dword[eax + 12],1 ;; the drone is not dead yet
         mov dword[eax + 13],0 ;; initial speed
-        cmp dword[tmpN],0
-        je initRoutine
+        inc byte[droneID]
+        
 
         ;;calc the initial x coordinate of the drone
         push eax
         call Randomxy
         mov ax,[lfsr] ;; save the new random number
         mov [initState],ax
-        pop eax
+        
         basicx87
         fstp qword[tmp87] ;; fstp return qword
         mov bx,word[tmp87]
+        pop eax
         mov word[eax + 4],bx
 
         ;;calc the initial y coordinate of the drone
@@ -306,7 +415,7 @@ Randomxy:
     pushf
     mov ebp,esp
 
-    mov dword[counter],16
+    mov dword[counter],1
     mov eax,0
     mov ax,word[initState]
     mov [lfsr],ax
@@ -325,7 +434,6 @@ Randomxy:
     ret
 
 initCo:
-    push edx ;; here the edx is the retun address like scheduler and printer ...
     instanciateCor
     ret
 
@@ -339,13 +447,19 @@ endCo:
     popad 
     ret
     
-resume:;; ebx holds the next Cor
+resume: ;; ebx holds the next Cor
     pushfd
     pushad
     mov edx,[curr_cor]
     mov [cors+4*edx],esp ;; save the stack top of the last used one
     .do_resume:
-        mov esp,[cors+ebx*4]
+        mov esp,[cors + ebx*4]
+        mov [curr_cor],ebx
+        ; push ebx
+        ; push nums
+        ; call printf
+        ; add esp,8
+
         popad
         popfd
         ret

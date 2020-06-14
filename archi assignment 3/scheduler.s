@@ -1,4 +1,6 @@
 global scheduler
+global activeDrones
+
 
 extern startCo
 extern endCo
@@ -16,17 +18,37 @@ section .data
 section .rodata
     winner: db "The Winner is drone: %d",10,0
     noWinner: db "error we could not find a winner !!!",10,0
+    here2: db "here",10,0
 section .text
+    
+    
+scheduler:
+
     mov ecx,dword[N]
     mov [activeDrones],ecx
+
     mov ecx,0 ;; counter for the k
     mov edx,0 ;; counter for the R
     mov ebx,2
-scheduler:
+_scheduler:
+
+    ; pushad 
+    ; push ebx
+    ; push winner
+    ; call printf
+    ; add esp,8
+    ; popad
+
     inc ebx
     inc ecx
     inc edx
+
     call resume
+
+    ; push here2
+    ; call printf
+    ; add esp,4
+
     inc ecx
     cmp ecx,dword[k]
     jb noPrint
@@ -38,6 +60,8 @@ scheduler:
 noPrint:
         ;;if (i/N)%R == 0 && i%(N-1) == 0 //R rounds have passed
         ;; edx deals with the Round Robih
+    
+
     pushad
     mov esi,edx ;; esi = i
     mov ecx,edx
@@ -66,10 +90,10 @@ noElimination:
     je theWinner
     cmp ebx,[N]
     je here
-    jmp scheduler
+    jmp _scheduler
 here:
     mov ebx,2
-    jmp scheduler
+    jmp _scheduler
 
 theWinner:  ;; byte 48 indicated dead or alive ;; byte 32 gives the next
     mov ebx,firstDrone
@@ -101,7 +125,7 @@ eliminateOne:
     mov esp,ebp
     pushad
 
-    mov ebx,firstDrone
+    mov ebx,[firstDrone]
     mov [lastDrone],ebx
         ;; hits = byte 28 in struct
 searchFristAlive:
@@ -134,7 +158,7 @@ searchFristAlive:
         jmp .contSeach
 
     .finishSearchMin: 
-        mov ebx,lastDrone
+        mov ebx,[lastDrone]
         mov byte[ebx+12],0
         
     popad

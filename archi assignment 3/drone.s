@@ -9,6 +9,7 @@ extern createTarget
 extern curr_cor
 extern firstDrone
 extern printf
+extern d
 
 global drones
 ; align 16
@@ -31,7 +32,8 @@ section .data
 
 section .rodata
     error: db "Drone not found",10,0
-
+    here: db "here",10,0
+    dfor: db "%d",10,0
 
 section .text
 
@@ -123,19 +125,23 @@ newPos:
     push ebp
     mov ebp,esp
 
-    mov ebx, firstDrone
-    mov eax,dword[ebx]
+    mov eax,0
+    mov ebx, [firstDrone]
+    mov al,byte[ebx]
+    add eax,2
     cmp eax,dword[curr_cor]
     je foundHim
 nextDrone:
     mov ebx,dword[ebx+8]
     cmp ebx,0
     je errorSearch
-    mov eax,dword[ebx]
+    mov eax,0
+    mov al,byte[ebx]
     cmp eax,dword[curr_cor]
     je foundHim
     jmp nextDrone
 foundHim:;;ebx points to the right drone
+
     mov ax, word[ebx+5]
     mov word[oldAlpha],ax
     mov eax,dword[ebx+13]
@@ -188,6 +194,8 @@ calcY:
     calcBounds
     mov ax, word[crdnt]
     mov word[ebx+3],ax
+
+
 
 saveNewAlpha:
     fild word[oldAlpha]
@@ -249,7 +257,11 @@ newPosend:
 ; (*) Do forever
 mayDestroy:
     ;;todo: check if the drone can destroy the target --> ask forum
+    mov ebx,0
+    call resume ;; tmp till done
+    
 
+    ret
     ;; in case returned true
     call createTarget
     ;     (*) if mayDestroy(…) (check if a drone may destroy the target)
@@ -263,7 +275,7 @@ mayDestroy:
 ;         (*) then change the new current angle to be α + ∆α, keeping the angle between [0, 360] by wraparound if needed   --> done
 ;         (*) then change the new current speed to be speed + ∆a, keeping the speed between [0, 100] by cutoff if needed    --> done
 
-    mov ebx,2
+    mov ebx,0
     call resume
 ;     (*) resume scheduler co-routine by calling resume(scheduler)	
 ; (*) end do
