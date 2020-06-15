@@ -15,6 +15,7 @@ global lfsr
 global initState
 global curr_cor
 global endCo
+global droneCor
 
 extern scheduler ;; the main function for the scheduler
 extern drones ;; the main function for the drones
@@ -25,17 +26,18 @@ extern createTarget
 section .data
     droneID: db 0
     index: dd 0
-    ;; here the drone struct is represented as a linked list
+    ;; here the drone struct is represented as a linked list = 39 bytes
     struc drone
         id: resb 1 
-        x: resw 1 
-        y: resw 1
-        alpha: resw 1
-        targets_Hit: resb 1 ;;32 bits
-        next: resb 4 ;;48 bits
-        dead: resb 1 ;; 52 bits
-        speed: resd 1
+        x: resw 4 ;; 1
+        y: resw 4 ;; 9
+        alpha: resw 4 ;; 17
+        targets_Hit: resb 1 ;;25
+        next: resb 4  ;;26
+        dead: resb 1  ;; 30
+        speed: resd 2 ;;31
     endstruc
+
     here: db "here",10,0
     lfsr: dd 0
     initState: dw 0
@@ -52,6 +54,8 @@ section	.rodata
     sscanfRead: db "%d" ,0
     msg: db "%s",10,0
     nums: db "%d",10,0
+    dmsg: db "here : %d",10,0
+    dfmsg: db "here : %.2f",10,0
 
 section .bss
     N: resd 1
@@ -63,7 +67,7 @@ section .bss
     mainSP: resd 1
     curr_cor: resd 1
     stcksz: equ 16*1024
-    
+    droneCor: resd 1
     cors: resd 10000 ;; an array of co-routines top
     stacks: resb 10000 * stcksz
     stateNumber: resb 16
@@ -80,6 +84,25 @@ section .text
     extern printf
     extern sscanf
     extern sscanf
+
+%macro debug 1
+    pushad
+    push %1
+    push dmsg
+    call printf
+    add esp,8
+    popad
+%endmacro
+
+%macro fdebug 2
+    pushad
+    push %2
+    push %1
+    push dfmsg
+    call printf
+    add esp,12
+    popad
+%endmacro
 
 %macro finish 0
     mov eax,1
@@ -134,14 +157,18 @@ section .text
     mov ax,[lfsr]
     shr ax,5
 
+;;16, 14 ,13, 11
     xor bx,cx
     xor bx,dx
     xor bx,ax
+    and bx,1
 
+    mov ax,0
     mov ax,[lfsr]
     shr ax,1
-    shr bx,15
+    shl bx,15
     or ax,bx
+    mov [lfsr],ax
 %endmacro
 
 %macro addDrone 0
@@ -149,7 +176,7 @@ section .text
     cmp dword[firstDrone],-1 ;;the first drone
     je %%_firstDrone
     mov ebx, [lastDrone]
-    mov [ebx + 8],eax
+    mov [ebx + 26],eax
     mov [lastDrone], eax
     jmp %%end
     %%_firstDrone:
@@ -161,7 +188,7 @@ section .text
 %macro freeDrones 0
     mov ebx,[firstDrone]
     %%loopFree:
-        mov eax,[ebx+8]
+        mov eax,[ebx+26]
         mov dword[lastDrone],eax
         push ebx
         call free
@@ -179,6 +206,10 @@ errorInput:
     call printf
     finish
     nop
+            ;; cors
+        ;; scheduler = 0
+        ;; printer = 1
+        ;; target = 2
 main:
     mov eax,[esp+4] ;; argc
     cmp eax,6
@@ -284,13 +315,13 @@ main:
     call initCo ;;which is a func
     pop ebx
 
-    inc ebx ;; this co_routine is for the printer
+    inc ebx ;; this co_routine is for the printer = 1
     mov edx,printer
     push ebx
     call initCo
     pop ebx
 
-    inc ebx ;; and finally we will amke the target as co_routine 3
+    inc ebx ;; and finally we will amke the target as co_routine 2
     push ebx
     mov edx, createTarget
     call initCo
@@ -357,53 +388,66 @@ createTheDrones:
         cmp dword[tmpN],0
         je initRoutine
 
-        push 17
+        push 39
         call malloc
         add esp,4
         mov cl,byte[droneID]
         mov byte[eax],cl ;; the first byte in the struct is the id
-        mov byte[eax + 7],0 ;;the hit targets
-        mov dword[eax + 8],0 ;; this drone is the last drone in the current list
-        mov dword[eax + 12],1 ;; the drone is not dead yet
-        mov dword[eax + 13],0 ;; initial speed
+        mov byte[eax + 25],0 ;;the hit targets
+        mov dword[eax + 26],0 ;; this drone is the last drone in the current list
+        mov dword[eax + 30],1 ;; the drone is not dead yet
+        mov dword[eax + 31],0 ;; initial speed
+        mov dword[eax + 35],0
         inc byte[droneID]
-        
+        ; debug eax
 
-        ;;calc the initial x coordinate of the drone
+            ;;calc the initial x coordinate of the drone
         push eax
         call Randomxy
-        mov ax,[lfsr] ;; save the new random number
-        mov [initState],ax
+        ; mov ax,[lfsr] ;; save the new random number
+        ; mov [initState],ax
         
         basicx87
         fstp qword[tmp87] ;; fstp return qword
-        mov bx,word[tmp87]
+            ; fdebug dword[tmp87],dword[tmp87 + 4]
+        mov ebx,dword[tmp87]
         pop eax
-        mov word[eax + 4],bx
+        mov dword[eax + 1],ebx
+        mov ebx,dword[tmp87+4]
+        mov dword[eax + 5],ebx
 
+        ; debug eax
         ;;calc the initial y coordinate of the drone
         push eax
         call Randomxy
-        mov ax,[lfsr] ;; save the new random number
-        mov [initState],ax
+        ; mov ax,[lfsr] ;; save the new random number
+        ; mov [initState],ax
         pop eax
+        
         basicx87
         fstp qword[tmp87] ;; fstp return qword
-        mov bx,word[tmp87]
-        mov word[eax + 3],bx
+        mov ebx,dword[tmp87]
+        mov dword[eax + 9],ebx        
+        mov ebx,dword[tmp87+4]
+        mov dword[eax + 13],ebx
+            ; fdebug dword[tmp87],dword[tmp87 + 4]
 
         ;;calc the initial alpha of the drone
         push eax
         call Randomxy
-        mov ax,[lfsr] ;; save the new random number
-        mov [initState],ax
+        ; mov ax,[lfsr] ;; save the new random number
+        ; mov [initState],ax
         pop eax
         mov dword[mulNumber],360 ;;for the alpha --> radian
         basicx87
         mov dword[mulNumber],100
         fstp qword[tmp87] ;; fstp return qword
-        mov bx,word[tmp87]
-        mov word[eax + 5],bx
+        mov ebx,dword[tmp87]
+        mov dword[eax + 17],ebx
+        mov ebx,dword[tmp87+4]
+        mov dword[eax+21],ebx
+
+            ; fdebug dword[tmp87],dword[tmp87 + 4]
 
         addDrone
         dec dword[tmpN]
@@ -415,7 +459,7 @@ Randomxy:
     pushf
     mov ebp,esp
 
-    mov dword[counter],1
+    mov dword[counter],2
     mov eax,0
     mov ax,word[initState]
     mov [lfsr],ax
@@ -423,11 +467,17 @@ Randomxy:
     .lfsrloop:
         lfsrloop
 
-        mov [lfsr],ax
+            ; push dword[lfsr]
+            ; push nums
+            ; call printf
+            ; add esp,8
+
         dec dword[counter]
         cmp dword[counter],0
         jne .lfsrloop
 
+    mov ax,[lfsr]
+    mov [initState],ax
     popf
     popad
     pop ebp
@@ -450,7 +500,11 @@ endCo:
 resume: ;; ebx holds the next Cor
     pushfd
     pushad
+
+        ; debug ebx
+
     mov edx,[curr_cor]
+    mov [droneCor],edx
     mov [cors+4*edx],esp ;; save the stack top of the last used one
     .do_resume:
         mov esp,[cors + ebx*4]
@@ -491,6 +545,8 @@ initRoutine:
 
 end_program:
     ;;free the drones --> done
+        ; debug ebx
     freeDrones
+        ; debug ebx
     finish
     nop

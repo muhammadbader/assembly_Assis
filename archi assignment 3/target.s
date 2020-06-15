@@ -1,6 +1,7 @@
 extern resume
 extern createNewTarget
 extern printf
+extern droneCor
 
 global createTarget
 
@@ -13,15 +14,15 @@ section .text
 ;; and before calling it we should save the id of the caller drone in th ebx
 createTarget:
     
-    pushad 
-    push ebx
-    push dfor
-    call printf
-    add esp,8
-    popad
+    ; pushad 
+    ; push ebx
+    ; push dfor
+    ; call printf
+    ; add esp,8
+    ; popad
 
-    push ebx
+    
     call createNewTarget
-    pop ebx
+    mov ebx,[droneCor]
     call resume
     jmp createTarget

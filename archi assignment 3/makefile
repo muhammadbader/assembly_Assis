@@ -17,5 +17,5 @@ target.o: target.s
 .PHONY: clean
 clean:
 	rm -rf *.o ass3
-# nasm -f elf -o try.o try.s && gcc -m32 -g -o try try.o
+# nasm -f elf -o try.o try.s && gcc -m32 -g -o try try.o && ./try
 # ./ass3 5 8 10 30 15019
