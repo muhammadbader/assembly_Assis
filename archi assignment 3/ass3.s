@@ -455,10 +455,13 @@ resume: ;; ebx holds the next Cor
     .do_resume:
         mov esp,[cors + ebx*4]
         mov [curr_cor],ebx
+
+        ; pushad
         ; push ebx
         ; push nums
         ; call printf
         ; add esp,8
+        ; popad
 
         popad
         popfd

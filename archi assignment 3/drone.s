@@ -5,7 +5,6 @@ extern Randomxy
 extern lfsr
 extern initState
 extern resume
-extern createTarget
 extern curr_cor
 extern firstDrone
 extern printf
@@ -80,6 +79,8 @@ drones:
     call speedChange
     call newPos
     call mayDestroy
+
+    
 
 randomAlpha:
     push ebp
@@ -257,13 +258,21 @@ newPosend:
 ; (*) Do forever
 mayDestroy:
     ;;todo: check if the drone can destroy the target --> ask forum
-    mov ebx,0
-    call resume ;; tmp till done
-    
-
-    ret
-    ;; in case returned true
+    call randomAlpha
+    call speedChange
     call createTarget
+
+    ; pushad 
+    ; push ebx
+    ; push dfor
+    ; call printf
+    ; add esp,8
+    ; popad
+
+    ;; in case returned true
+   
+    
+    
     ;     (*) if mayDestroy(…) (check if a drone may destroy the target)
     ;         (*) destroy the target	
     ;         (*) resume target co-routine 
@@ -275,8 +284,11 @@ mayDestroy:
 ;         (*) then change the new current angle to be α + ∆α, keeping the angle between [0, 360] by wraparound if needed   --> done
 ;         (*) then change the new current speed to be speed + ∆a, keeping the speed between [0, 100] by cutoff if needed    --> done
 
+    
+
     mov ebx,0
     call resume
+    jmp mayDestroy
 ;     (*) resume scheduler co-routine by calling resume(scheduler)	
 ; (*) end do
 

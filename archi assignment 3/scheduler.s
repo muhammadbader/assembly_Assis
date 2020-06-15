@@ -32,18 +32,22 @@ scheduler:
     mov ebx,2
 _scheduler:
 
-    ; pushad 
-    ; push ebx
-    ; push winner
-    ; call printf
-    ; add esp,8
-    ; popad
+    
 
     inc ebx
     inc ecx
     inc edx
 
+    
+
     call resume
+
+    pushad 
+    push ebx
+    push winner
+    call printf
+    add esp,8
+    popad
 
     ; push here2
     ; call printf
