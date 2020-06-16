@@ -1,6 +1,6 @@
 global scheduler
 global activeDrones
-
+global drn
 
 extern startCo
 extern endCo
@@ -16,7 +16,7 @@ extern lastDrone
 section .data
     activeDrones: dd 0
     minKills: dd 0
-    ; drn: dd 0
+    drn: dd 0
     x: dd 90
 section .rodata
     winner: db "The Winner is drone: %d",10,0
@@ -190,7 +190,7 @@ checkNextAlive:
         mov ebx,[firstDrone]
         jmp .livecheck
     .cont: ;; here we found the next not dead drone
-        ; mov dword[drn],ebx
+        mov dword[drn],ebx
 
     ret
 
@@ -220,6 +220,18 @@ weHaveAWinner:
     push winner
     call printf
     add esp,8
+
+        ; mov ebx,[firstDrone]
+        ; again:
+        ; mov eax,0
+        ; mov al,byte[ebx+25]
+        ; debug eax
+        ; cmp dword[ebx+26],0
+        ; je fin
+        ; mov ebx,dword[ebx+26]
+        ; jmp again
+        ; fin:
+        
     call endCo
 
 errorNoWinner:

@@ -34,8 +34,8 @@ section .text
 printer:
     
         ; debug
-        cmp dword[x],0
-        je stopPrinting
+        ; cmp dword[x],0
+        ; je stopPrinting
     dec dword[x]
     push dword[x_target+4] ;; push a qword
     push dword[x_target]

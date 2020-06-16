@@ -9,6 +9,7 @@ extern curr_cor
 extern firstDrone
 extern printf
 extern d
+extern drn
 
 global drones
 ; global drnID
@@ -29,7 +30,7 @@ section .data
     newSpeed: dq 0
     bias: dd 0
     tmp87: dq 0
-    drn: dd 0
+    ; drn: dd 0
     ; drnID:dd 0
     x: dd 160
     tmp: dq 0
@@ -399,14 +400,14 @@ mayDestroy:
 ;         (*) first, move speed units at the direction defined by the current angle, wrapping around the torus if needed. --> done
 ;         (*) then change the new current angle to be α + ∆α, keeping the angle between [0, 360] by wraparound if needed   --> done
 ;         (*) then change the new current speed to be speed + ∆a, keeping the speed between [0, 100] by cutoff if needed    --> done
-nextNotDead:
-    mov ebx,dword[ebx+26];; next drone
-    cmp ebx,0 ;; not null
-    jne roundRobin
-    mov ebx,dword[firstDrone]
-  roundRobin:
-    cmp byte[ebx+30],0 ;;check if this drone is dead
-    je nextNotDead ;; if dead check the next drone
+; nextNotDead:
+;     mov ebx,dword[ebx+26];; next drone
+;     cmp ebx,0 ;; not null
+;     jne roundRobin
+;     mov ebx,dword[firstDrone]
+;   roundRobin:
+;     cmp byte[ebx+30],0 ;;check if this drone is dead
+;     je nextNotDead ;; if dead check the next drone
         ; droneID
         ; mov eax,0
         ; mov al, byte[ebx+30]
@@ -414,7 +415,8 @@ nextNotDead:
         ; debug eax
 
         
-    mov dword[drn],ebx 
+    ; mov dword[drn],ebx 
+
     ; mov bl,byte[ebx]
     ; mov byte[drnID],bl
         ; debug dword[drnID]
