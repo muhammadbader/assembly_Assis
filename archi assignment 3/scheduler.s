@@ -51,9 +51,12 @@ scheduler:
     mov ecx,dword[N]
     mov [activeDrones],ecx
 
+    mov ebx,1
+    call resume
+    ; debug ebx
     mov ecx,0 ;; counter for the k
     mov edx,0 ;; counter for the R
-    mov ebx,2
+    inc ebx
 _scheduler:
 
     inc ebx

@@ -522,6 +522,7 @@ resume: ;; ebx holds the next Cor
         ret
     
 initRoutine:
+    
     mov esi,0
     mov eax,dword[N]
     mov dword[tmpN],eax

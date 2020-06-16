@@ -132,8 +132,15 @@ main:
     ; call printf
     ; add esp,8
 
+    mov dword[lfsr],12
     finit
-    fld qword[rad]
+    fild dword[num]
+    fidiv dword[lfsr]
+    mov dword[lfsr],11
+    fimul dword[lfsr]
+    mov dword[lfsr],60
+    fisub dword[lfsr]
+    
     sub esp,8
     fstp qword[esp]
     push floating

@@ -24,16 +24,18 @@ section .bss
     clamp: resd 1
 
 section .data
-    delta_alpha: dq 0
+    delta_alpha: dq 0.0
     newSpeed: dq 0
     bias: dd 0
     tmp87: dq 0
     drn: dd 0
+    x: dd 5
 
 section .rodata
     error: db "Drone not found",10,0
     here: db "here: %d",10,0
     dfor: db "%d",10,0
+    ffor: db "%f",10,0
 
 section .text
 
@@ -134,15 +136,26 @@ randomAlpha:
     call Randomxy
     mov ax,word[lfsr]
     mov word[initState],ax
+        ; debug dword[initState]
     mov dword[stateNumber],65535
     mov dword[mulNumber],120
-    fld dword[lfsr]
+    fild dword[lfsr]
+        ; debug dword[lfsr]
     fidiv dword[stateNumber]
     fimul dword[mulNumber]
     mov dword[bias],60
     fisub dword[bias]
     fstp qword[delta_alpha]
 
+        ; cmp dword[x],0
+        ; je dont
+        ; dec dword[x]
+        ; push dword[delta_alpha+4]
+        ; push dword[delta_alpha]
+        ; push ffor
+        ; call printf
+        ; add esp,12
+; dont:
     mov esp,ebp
     pop ebp
     ret
@@ -156,13 +169,22 @@ speedChange:
     mov word[initState],ax
     mov dword[stateNumber],65535
     mov dword[mulNumber],20
-    fld dword[lfsr]
+    fild dword[lfsr]
     fidiv dword[stateNumber]
     fimul dword[mulNumber]
     mov dword[bias],10
     fisub dword[bias]
     fstp qword[newSpeed]
 
+;         cmp dword[x],0
+;         je dont
+;         dec dword[x]
+;         push dword[newSpeed+4]
+;         push dword[newSpeed]
+;         push ffor
+;         call printf
+;         add esp,12
+; dont:
     mov esp,ebp
     pop ebp
     ret
