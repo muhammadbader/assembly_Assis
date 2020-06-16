@@ -16,7 +16,7 @@ section .rodata
 section .data
     tmp: dd 0
     c: dd 0
-    x: dd 0
+    x: dd 10
 section .text
 
 %macro debug 0

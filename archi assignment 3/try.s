@@ -134,12 +134,19 @@ main:
 
     mov dword[lfsr],12
     finit
+    mov dword[num],90
     fild dword[num]
-    fidiv dword[lfsr]
-    mov dword[lfsr],11
-    fimul dword[lfsr]
-    mov dword[lfsr],60
-    fisub dword[lfsr]
+    fiadd dword[num]
+    ; fldpi
+    ; fmulp
+    ; mov dword[num],180
+    ; fidiv dword[num]
+    ; fidiv dword[lfsr]
+    ; mov dword[lfsr],11
+    ; fimul dword[lfsr]
+    ; mov dword[lfsr],60
+    ; fisub dword[lfsr]
+    ; fcos
     
     sub esp,8
     fstp qword[esp]
