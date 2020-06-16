@@ -11,6 +11,7 @@ extern printf
 extern d
 
 global drones
+; global drnID
 ; align 16
 
 section .bss
@@ -29,7 +30,8 @@ section .data
     bias: dd 0
     tmp87: dq 0
     drn: dd 0
-    x: dd 30
+    ; drnID:dd 0
+    x: dd 160
     tmp: dq 0
 
 section .rodata
@@ -82,7 +84,6 @@ section .text
     fstp qword[tmp87];; take out the 0 we pushed in
         ; fst qword[tmp]
         ; posSpeed dword[tmp],dword[tmp+4]
-    
     ; mov eax,dword[tmp87]
     ; mov dword[clamp], eax
     fst qword[tmp87]
@@ -150,9 +151,7 @@ nextDrone:
     jmp nextDrone
 foundHim:
     mov dword[drn],ebx ;; drn point to the drone for further use
-
         ; droneID
-    
     call randomAlpha
     call speedChange
     call newPos
@@ -178,15 +177,6 @@ randomAlpha:
     fisub dword[bias]
     fstp qword[delta_alpha]
 
-        ; cmp dword[x],0
-        ; je dont
-        ; dec dword[x]
-        ; push dword[delta_alpha+4]
-        ; push dword[delta_alpha]
-        ; push ffor
-        ; call printf
-        ; add esp,12
-; dont:
     mov esp,ebp
     pop ebp
     ret
@@ -388,28 +378,16 @@ newPosend:
 
 ; (*) Do forever
 mayDestroy:
+        ; debug ebx
     mov ebx,dword[drn]
     ;;todo --> done: check if the drone can destroy the target
-
         ; droneID
-
     call canDestroy
     call randomAlpha
     call speedChange
     mov ebx,dword[drn]
-
-        ; droneID
-
-    ; pushad 
-    ; push ebx
-    ; push dfor
-    ; call printf
-    ; add esp,8
-    ; popad
-
+        ; debug ebx
     ;; in case returned true
-   
-    
     
     ;     (*) if mayDestroy(…) (check if a drone may destroy the target)
     ;         (*) destroy the target	
@@ -421,15 +399,27 @@ mayDestroy:
 ;         (*) first, move speed units at the direction defined by the current angle, wrapping around the torus if needed. --> done
 ;         (*) then change the new current angle to be α + ∆α, keeping the angle between [0, 360] by wraparound if needed   --> done
 ;         (*) then change the new current speed to be speed + ∆a, keeping the speed between [0, 100] by cutoff if needed    --> done
-
-    ; push eax
-    ; mov eax,0
-    ; mov al,byte[ebx]
-    ;     debug eax
-    ; pop eax
-
+nextNotDead:
+    mov ebx,dword[ebx+26];; next drone
+    cmp ebx,0 ;; not null
+    jne roundRobin
+    mov ebx,dword[firstDrone]
+  roundRobin:
+    cmp byte[ebx+30],0 ;;check if this drone is dead
+    je nextNotDead ;; if dead check the next drone
         ; droneID
+        ; mov eax,0
+        ; mov al, byte[ebx+30]
+        ; droneID
+        ; debug eax
 
+        
+    mov dword[drn],ebx 
+    ; mov bl,byte[ebx]
+    ; mov byte[drnID],bl
+        ; debug dword[drnID]
+    ; add dword[drnID],2 ;; this indicated the next drone to play
+        ; debug dword[drnID]
     mov ebx,0
     call resume
     jmp mayDestroy
@@ -465,18 +455,31 @@ canDestroy:
     fld qword[y_target]
     fld qword[ebx+9]
     fsubp  ;; y_target - y_drone
-    fst st1
+    fst qword[tmp]
+    fld qword[tmp]
     fmulp ;; (y_target - y_drone)^2
-    faddp ;; (y_target - y_drone)^2 + (x_target - x_drone)^2
+    fadd ;; (y_target - y_drone)^2 + (x_target - x_drone)^2
+        ; fst qword[tmp]
+        ; posSpeed dword[tmp],dword[tmp+4]
+        ; fst qword[tmp87]
+        ; posSpeed dword[tmp87],dword[tmp87+4]
+        ; fld qword[tmp] 
     fsqrt ;; fsqrt does the pop
         ;; ((y_target - y_drone)^2 + (x_target - x_drone)^2 )^ 0.5
+        ; fst qword[tmp]
+        ; posSpeed dword[tmp],dword[tmp+4]
     fild dword[d]
+        ; fst qword[tmp]
+        ; posSpeed dword[tmp],dword[tmp+4]
     fcomi st0,st1 ;; check if d > ((y_target - y_drone)^2 + (x_target - x_drone)^2 )^ 0.5
-    ja DontDestroy
+    jb DontDestroy
     inc byte[ebx+25] ;; Hit the target
+        ; debug ebx
+        ; droneID
         ;;create new target
     mov ebx,2 ;; resume the target co-routine
     call resume
     ret
 DontDestroy:
+    ; debug ebx
    ret

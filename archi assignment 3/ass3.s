@@ -46,6 +46,7 @@ section .data
     y_target: dq 0
     tmp87: dq 0
     targetFormat: db "%.2f, %.2f",10,0
+    xx: dd 0
     
 section	.rodata
     align 16 
@@ -86,12 +87,16 @@ section .text
     extern sscanf
 
 %macro debug 1
+    cmp dword[xx],0
+    je %%dont
+    dec dword[xx]
     pushad
     push %1
     push dmsg
     call printf
     add esp,8
     popad
+    %%dont:
 %endmacro
 
 %macro fdebug 2
@@ -278,12 +283,6 @@ main:
     push d
     sscanfCall
 
-    ; pushad 
-    ; push dword[d]
-    ; push nums
-    ; call printf
-    ; add esp,8
-    ; popad
     
     inc dword[index]
     mov ecx,dword[index]
@@ -293,21 +292,6 @@ main:
     mov ax,word[seed]
     mov word[initState],ax
 
-
-    ; pushad 
-    ; push dword[seed]
-    ; push nums
-    ; call printf
-    ; add esp,8
-    ; popad
-
-    ; pushad
-    ; mov ecx,dword[index]
-    ; push dword[esi+ 4*ecx]
-    ; push msg
-    ; call printf
-    ; add esp,8
-    ; popad
 
     mov ebx,0 ;; we consider the scheduler as co-routine 0 so we need to instantiate it by calling the initCo from the prac session
     push ebx
@@ -336,30 +320,12 @@ main:
     mov dword[lastDrone],0
     call createNewTarget
 
-    ; push dword[x_target+4] ;; push a qword
-    ; push dword[x_target]
-    ; push dword[y_target+4] ;; push a qword
-    ; push dword[y_target]
-    ; push targetFormat
-    ; call printf
-    ; add esp,20
-
     call createTheDrones
 
 createNewTarget:
     call Randomxy
     mov ax,[lfsr] ;; save the new random number
     mov [initState],ax
-
-    ; push dword[mulNumber]
-    ; push nums
-    ; call printf
-    ; add esp,8
-
-    ; push dword[stateNumber]
-    ; push nums
-    ; call printf
-    ; add esp,8
 
     ;;the x coordinate of the target
     basicx87
@@ -500,23 +466,13 @@ endCo:
 resume: ;; ebx holds the next Cor
     pushfd
     pushad
-
         ; debug ebx
-
     mov edx,[curr_cor]
     mov [droneCor],edx
     mov [cors+4*edx],esp ;; save the stack top of the last used one
     .do_resume:
         mov esp,[cors + ebx*4]
         mov [curr_cor],ebx
-
-        ; pushad
-        ; push ebx
-        ; push nums
-        ; call printf
-        ; add esp,8
-        ; popad
-
         popad
         popfd
         ret

@@ -134,9 +134,10 @@ main:
 
     mov dword[lfsr],12
     finit
-    mov dword[num],90
+    mov dword[num],9000
     fild dword[num]
-    fiadd dword[num]
+    fild dword[num]
+    faddp
     ; fldpi
     ; fmulp
     ; mov dword[num],180

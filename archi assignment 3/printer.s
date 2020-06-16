@@ -16,7 +16,7 @@ section .rodata
 section .data
     tmp: dd 0
     c: dd 0
-    x: dd 10
+    x: dd 0
 section .text
 
 %macro debug 0
@@ -33,9 +33,9 @@ section .text
     ;;same case as the target
 printer:
     
-    ; debug
-    cmp dword[x],0
-    je stopPrinting
+        ; debug
+        cmp dword[x],0
+        je stopPrinting
     dec dword[x]
     push dword[x_target+4] ;; push a qword
     push dword[x_target]

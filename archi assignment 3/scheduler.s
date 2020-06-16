@@ -11,10 +11,13 @@ extern R
 extern printf
 extern firstDrone
 extern lastDrone
+; extern drnID
 
 section .data
     activeDrones: dd 0
     minKills: dd 0
+    ; drn: dd 0
+    x: dd 90
 section .rodata
     winner: db "The Winner is drone: %d",10,0
     noWinner: db "error we could not find a winner !!!",10,0
@@ -22,12 +25,16 @@ section .rodata
 section .text
     
 %macro debug 1
+    cmp dword[x],0
+    je %%dont
+    dec dword[x]
     pushad
     push %1
     push here2
     call printf
     add esp,8
     popad
+    %%dont:
 %endmacro
 
 %macro droneID 0
@@ -45,6 +52,21 @@ section .text
         debug eax
     pop eax
 %endmacro
+
+%macro firstAlive 0
+    %%check:
+        cmp byte[ebx+30],0
+        jne %%found
+        cmp dword[ebx+26],26
+        je %%round
+        mov ebx,dword[ebx+26]
+        jmp %%check
+        %%round:
+            mov ebx,[firstDrone]
+            jmp %%check
+    %%found:
+%endmacro
+
 
 scheduler:
 
@@ -65,7 +87,7 @@ _scheduler:
 
         ; debug ebx
         ; debug edx
-
+    ; firstAlive
     call resume
 
         ; debug ebx
@@ -120,23 +142,27 @@ nextCheck:
     mov edx,0 ;; start another round
     pushad
             ;; here call the func to eliminate one of the drones
-        
         ; debug esi
-
     call eliminateOne
     dec dword[activeDrones]
 noElimination:
     popad
-
         ; debug ebx
-
     cmp dword[activeDrones],1
     je theWinner
-    mov eax,ebx
-    sub eax,2
+    ; mov ebx,dword[drnID]
+        ; debug dword[drnID]
+    ; call resume
+    ; jmp _scheduler
+    call checkNextAlive
+    mov eax,0
+    mov al,byte[ebx];; eax = drone ID
+    mov ebx,eax
+    add ebx,2
 
-        ; debug eax
-    
+    ; mov eax,ebx
+    ; sub eax,2
+        ; debug ebx
     cmp eax,[N]
     je here
     jmp _scheduler
@@ -144,6 +170,30 @@ here:
     ; debug ebx
     mov ebx,2
     jmp _scheduler
+
+
+checkNextAlive:
+    mov eax,ebx
+    sub eax,2 ;; suppouse current drone
+    mov ebx,[firstDrone]
+    .foundHim:
+        cmp al,byte[ebx]
+        je .livecheck
+        mov ebx,dword[ebx+26]
+        jmp .foundHim
+    .livecheck:
+        cmp byte[ebx+30],1
+        je .cont
+        mov ebx,dword[ebx+26]
+        cmp ebx,0
+        jne .livecheck
+        mov ebx,[firstDrone]
+        jmp .livecheck
+    .cont: ;; here we found the next not dead drone
+        ; mov dword[drn],ebx
+
+    ret
+
 
 theWinner:  ;; byte 48 indicated dead or alive ;; byte 32 gives the next
     mov ebx,[firstDrone]
@@ -161,6 +211,9 @@ theWinner:  ;; byte 48 indicated dead or alive ;; byte 32 gives the next
     
 
 weHaveAWinner:
+        ; mov eax,0
+        ; mov al,byte[ebx+25]
+        ; debug eax
     mov eax,0
     mov al,byte[ebx]
     push eax
@@ -176,19 +229,13 @@ errorNoWinner:
     call endCo
 
 eliminateOne:
-        ; debug ebx
     push ebp
-        ; debug ebx
     mov ebp,esp
-        ; debug ebx
     pushad
-        ; debug ebx
     mov ebx,[firstDrone]
     mov [lastDrone],ebx
         ;; hits = byte 25 in struct
-
         ; droneID
-
 searchFristAlive:
     cmp byte[ebx+30],1
     je .foundOne
@@ -206,6 +253,7 @@ searchFristAlive:
     .searchMin:
         cmp byte[ebx+30],1 
         je .cmpMin  ;; if this drone is not dead
+            ; droneID
     .contSeach:
         cmp dword[ebx+26],0
         je .finishSearchMin ;; we got to the end of the drones list
@@ -215,8 +263,10 @@ searchFristAlive:
     .cmpMin: 
         mov eax,0
         mov al,byte[ebx+25] ;; check if we have a new min
+            ; droneID
         cmp eax,dword[minKills]
         ja .contSeach
+            ; droneID
         mov dword[minKills],eax
         mov [lastDrone],ebx
         jmp .contSeach
@@ -224,6 +274,8 @@ searchFristAlive:
     .finishSearchMin: 
         mov ebx,[lastDrone]
         mov byte[ebx+30],0 ;; kill the drone
+            ; droneID
+            ; debug dword[minKills]
         
     popad
     pop ebp
