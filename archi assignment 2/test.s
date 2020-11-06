@@ -16,7 +16,7 @@ section .rodata
     error3: db "Error: Insifficient stack items",0x0a,0
     error4: db "Error: Unknown symbol",0x0a,0
     ; debug: db "debug",0x0a,0
-
+aa
 section .data
     newNumber: dd 0
     oldNumber: dd 0 

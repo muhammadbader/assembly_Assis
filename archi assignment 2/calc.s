@@ -1140,3 +1140,5 @@ newNode:
     mov dword[ecx+1],eax
     mov dword[eax+1],0
     jmp doneNew
+
+;; hello fuckers
